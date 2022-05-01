@@ -1,0 +1,40 @@
+  body{
+  	font-family: sans-serif;
+  }
+  @page {
+  	margin: 160px 50px;
+  }
+  header { 
+  	position: fixed;
+  	left: 0px;
+  	top: -140px;
+  	right: 0px;
+  	height: 100px;
+  	background-color: #ddd;
+  }
+  header h1{
+  	
+  }
+  header h2{
+  	margin: 0 0 10px 0;
+  }
+  footer {
+  	position: fixed;
+  	left: 0px;
+  	bottom: -50px;
+  	right: 0px;
+  	height: 40px;
+  	border-bottom: 2px solid #ddd;
+  }
+  footer .page:after {
+  	content: counter(page);
+  }
+  footer table {
+  	width: 100%;
+  }
+  footer p {
+  	text-align: right;
+  }
+  footer .izq {
+  	text-align: left;
+  }
