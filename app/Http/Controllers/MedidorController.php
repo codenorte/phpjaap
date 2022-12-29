@@ -9,6 +9,9 @@ use App\Models\Fotos;
 use App\Models\Medidorusers;
 use App\Models\Detallefacturainstalacion;
 use App\Models\Facturasinstalacion;
+use App\Models\Tarifas;
+use App\Models\Detallefactura;
+use App\Models\Facturas;
 
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -63,7 +66,7 @@ class MedidorController extends Controller
     }
     /**
      * Crear Medidor
-     *
+     * medidor, medidorusers,users,fotos,facturas,detallefactura
      * @param Request $req
      * @return \Illuminate\Http\JsonResponse
      */
@@ -75,11 +78,15 @@ class MedidorController extends Controller
 
             $medidor=$data[0]['medidor'];
             $users=$data[0]['users'];
+            $controlaniomes=$data[0]['controlaniomes'];
+            $usuario_actual=$data[0]['usuario_actual'];
 
             $buscar_usuario = User::
             where('RUCCI',$users['RUCCI'])
             ->where('roles_id',5)
             ->first();
+
+            $today = Carbon::now();
 
             if($buscar_usuario){
                 return response()->json(['error'=>'Datos ya existen, por favor cree un nuevo registro'],401,[]);
@@ -146,9 +153,61 @@ class MedidorController extends Controller
                 $med->VALORPORCONEXION = $medidor["VALORPORCONEXION"];
                 $med->PAGADO = 'NO';
                 $med->SALDO = $medidor["VALORPORCONEXION"];
-                $med->FECHA = $medidor["FECHA"];
+                $med->FECHA = $today;
                 $med->visto = '0';
                 $med->save();
+
+                //create medidorusers
+                $medidorusers=new Medidorusers();
+                $medidorusers->FECHA=$today;
+                $medidorusers->IDUSUARIO=$us['id'];
+                $medidorusers->IDMEDIDOR=$med["IDMEDIDOR"];
+                $medidorusers->ESTADO=1;
+                $medidorusers->NIVEL=1;
+                $medidorusers->save();
+
+
+                //crear factura
+                $numfactura = Facturas::select('NUMFACTURA')->max('NUMFACTURA');
+                $facturas = new Facturas();
+                $numfactura++;
+                $facturas->NUMFACTURA = $numfactura;
+                $facturas->FECHAEMISION = $today;
+                $facturas->SUBTOTAL = 0.0;
+                $facturas->IVA = 0.0;
+                $facturas->TOTAL = 0.0;
+                $facturas->USUARIOACTUAL = $usuario_actual;
+                $facturas->estado = 1; //CAMBIAR AQUI
+
+                $facturas->save();
+
+
+                //crear la primera facturadetalle//
+                //obtener el ultimo registro de tarifas
+                $tarifas = Tarifas::latest()->first();
+                $detallefactura=new Detallefactura();
+
+                $detallefactura->IDTARIFAS = $tarifas['IDTARIFAS'];
+                $detallefactura->IDMEDIDOR = $med["IDMEDIDOR"];
+                $detallefactura->ANIOMES = $controlaniomes["aniomes"];
+                $detallefactura->MEDIDAANT = 0;
+                $detallefactura->MEDIDAACT = 0;
+                $detallefactura->CONSUMO = 0;
+                $detallefactura->MEDEXCEDIDO = 0;
+                $detallefactura->TAREXCEDIDO = 0;
+
+                $detallefactura->APORTEMINGA = 0;
+                $detallefactura->ALCANTARILLADO = 0;
+                $detallefactura->SUBTOTAL = 0;
+                $detallefactura->TOTAL = 0;
+                $detallefactura->OBSERVACION = 'SI';
+                $detallefactura->estado = 1;
+                $detallefactura->IDFACTURA = $facturas['IDFACTURA'];
+                $detallefactura->controlaniomes_id = $controlaniomes['id'];
+                $detallefactura->NUMFACTURA = $facturas['NUMFACTURA'];
+
+                $detallefactura->save();
+
 
                 DB::commit();
                 //default email destino .- No tocar - correo en el frontend
@@ -164,9 +223,14 @@ class MedidorController extends Controller
                     'title'=>'Create data',
                     'message'=>$message,
                     'code'=>201,
+                    'allData'=>$data,
                     'data'=>$users,
                     'medidor'=>$medidor,
-                    'imagen'=>$imagen
+                    'med'=>$med,
+                    'imagen'=>$imagen,
+                    'medidorusers'=>$medidorusers,
+                    'facturas'=>$facturas,
+                    'detallefactura'=>$detallefactura
                 ),201);
             } catch (Exception $e) {
                 DB::rollback();
