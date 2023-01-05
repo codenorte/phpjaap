@@ -842,6 +842,8 @@ class DetallefacturaController extends Controller
             ->where('controlaniomes_id',$controlaniomes_id)
             ->get();
 
+            //return $detallefactura;
+
             $controlaniomesdetallefactura = Controlaniomesdetallefactura::
             where('id',$controlaniomes_id)
             ->first();
@@ -856,13 +858,16 @@ class DetallefacturaController extends Controller
             foreach ($medidor as $med) {
                 $fecha = Carbon::createFromFormat('Y-m-d', $med['FECHA']);
                 $fecha->day=1;
+                //cambia la fecha para comparar con controlaniomes
                 if($fecha<=$controlaniomes){
                     $medidor_existe[$i] = $med;
                     $copiamedidor[$i] = $med;
-                    //var_dump($i);
+                    //var_dump($med->CODIGO);
                     $i++;
                 }
             }
+            //var_dump($medidor_existe[400]);
+            //aliminar el medidor repetido del array
             $j = 0;
             foreach ($medidor_existe as $medsin) {
                 foreach ($detallefactura as $det) {

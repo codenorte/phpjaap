@@ -153,7 +153,7 @@ class MedidorController extends Controller
                 $med->VALORPORCONEXION = $medidor["VALORPORCONEXION"];
                 $med->PAGADO = 'NO';
                 $med->SALDO = $medidor["VALORPORCONEXION"];
-                $med->FECHA = $today;
+                $med->FECHA = $medidor['FECHA'];
                 $med->visto = '0';
                 $med->save();
 
